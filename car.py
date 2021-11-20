@@ -32,7 +32,7 @@ def cars_get_post():
 			return jsonify(error), 400
 
         # create new boat in Datastore
-		new_boats = datastore.entity.Entity(key=client.key("boats"))
+		new_boats = datastore.Entity(key=client.key("boats"))
 		new_boats.update({"name": content["name"], "type": content["type"], 
 			"length": content["length"], "public": content["public"], "owner": sub})
 		client.put(new_boats)

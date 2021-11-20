@@ -6,7 +6,7 @@ from google.auth.transport import requests
 import google_auth_oauthlib.flow
 import os
 
-import driver
+import user
 import car
 import spot
 
@@ -28,6 +28,7 @@ client = datastore.Client()
 
 SCOPES = [
 	'https://www.googleapis.com/auth/userinfo.profile', 
+	'https://www.googleapis.com/auth/userinfo.email',
 	'openid'
 ]
 API_SERVICE_NAME = 'userinfo'
@@ -76,7 +77,33 @@ def oauth2callback():
 	req = requests.Request()
 	id = id_token.verify_oauth2_token(token['id_token'], req, session['credentials']['client_id'])
 
-	return f"<h1>User info</h1> <p>your JWT is: {token['id_token']}</p> <p>decoded JWT: {id}</p>"
+	# Create the new user in datastore
+	# if the user didn't already exist
+	query = client.query(kind="users")
+	query.add_filter("sub", "=", id['sub'])
+	result = list(query.fetch())
+
+	if len(result) == 0:
+		new_user = datastore.Entity(key=client.key('users'))
+		new_user.update({'name': id['name'], 'email': id['email'], 'sub': id['sub']})
+		client.put(new_user)
+
+		return f""" <h1>Thanks for logging in!</h1> 
+					<p>A new user account has been created and your user info is shown below.</p>
+					<p>Name: {id['name']}</p>
+					<p>Email: {id['email']}</p>
+					<p>Your JWT is: {token['id_token']}</p> 
+					<p>Please include the JWT in the Authorization header for your requests.</p>
+					""", 201
+
+	else:
+		return f""" <h1>Welcome back!</h1> 
+					<p>Your user account already exists and your user info is shown below.</p>
+					<p>Name: {id['name']}</p>
+					<p>Email: {id['email']}</p>
+					<p>Your JWT is: {token['id_token']}</p> 
+					<p>Please include the JWT in the Authorization header for your requests.</p>
+					""", 200
 
 def credentials_to_dict(credentials):
 	return {'token': credentials.token,
