@@ -6,6 +6,10 @@ from google.auth.transport import requests
 import google_auth_oauthlib.flow
 import os
 
+import driver
+import car
+import spot
+
 # REST API by Eric Chiu
 # Simulates a parking garage with cars that park in spots
 
@@ -17,8 +21,8 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
 app.secret_key = str(uuid4)
-# app.register_blueprint(boat.bp)
-# app.register_blueprint(load.bp)
+app.register_blueprint(car.bp)
+app.register_blueprint(spot.bp)
 
 client = datastore.Client()
 
@@ -31,7 +35,7 @@ API_VERSION = 'v2'
 
 @app.route('/')
 def index():
-    return f'<h1>Welcome</h1> <p>Get your JWT <a href="/authorize">here</a></p>'
+    return f'<h1>Welcome to the Parking Spot</h1> <p>Get your JWT <a href="/authorize">here</a> so we can find a spot for your car!</p>'
 
 @app.route('/authorize')
 def authorize():
