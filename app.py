@@ -21,6 +21,7 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
 app.secret_key = str(uuid4)
+app.register_blueprint(user.bp)
 app.register_blueprint(car.bp)
 app.register_blueprint(spot.bp)
 
@@ -36,11 +37,11 @@ API_VERSION = 'v2'
 
 @app.route('/')
 def index():
-    return f'<h1>Welcome to the Parking Spot</h1> <p>Get your JWT <a href="/authorize">here</a> so we can find a spot for your car!</p>'
+	return f'<h1>Welcome to the Parking Spot</h1> <p>Get your JWT <a href="/authorize">here</a> so we can find a spot for your car!</p>'
 
 @app.route('/authorize')
 def authorize():
-    # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
+	# Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
 	flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
 		CLIENT_SECRETS_FILE, scopes=SCOPES)
 
@@ -113,6 +114,7 @@ def credentials_to_dict(credentials):
 			'client_secret': credentials.client_secret,
 			'scopes': credentials.scopes
 			}
-
+			
+			
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8080, debug=True)
+	app.run(host='127.0.0.1', port=8080, debug=True)
