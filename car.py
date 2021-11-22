@@ -2,48 +2,44 @@ from flask import Blueprint, request, jsonify, Response, session
 from google.cloud import datastore
 from google.auth.transport import requests
 from google.oauth2 import id_token
+from jwt_ops import verify
 
 client = datastore.Client()
 bp = Blueprint('car', __name__, url_prefix='/cars')
 
-@bp.route("", methods=['POST','GET'])
+@bp.route('', methods=['POST','GET'])
 def cars_get_post():
 
     # create new car
 	if request.method == "POST":
 		content = request.get_json()
-		jwt = request.headers.get('Authorization')
+		sub = verify()
 
-		if jwt:
-			req = requests.Request()
-			jwt = jwt.split(" ")[1]
+		if sub is False:
+			return jsonify({'Error': 'JWT could not be verified'}), 401
+		elif sub is None:
+			return jsonify({'Error': 'No JWT was provided'}), 401
 
-			try:
-				sub = id_token.verify_oauth2_token(jwt, req, session['credentials']['client_id'])
-				sub = sub['sub']
-			except:
-				return 'The provided JWT could not be verified', 401
-
-		else:
-			return 'Please specify the JWT', 401
-
-		if 'name' not in content or 'type' not in content or 'length' not in content or 'public' not in content or len(content) != 4:
+		if 'make' not in content or 'plate' not in content or len(content) != 2:
 			error = {"Error": "The request object is missing at least one of the required attributes"}
 			return jsonify(error), 400
 
-        # create new boat in Datastore
-		new_boats = datastore.Entity(key=client.key("boats"))
-		new_boats.update({"name": content["name"], "type": content["type"], 
-			"length": content["length"], "public": content["public"], "owner": sub})
-		client.put(new_boats)
+		new_car = {
+			'make': content['make'], 
+			'plate': content['plate'], 
+			'owner': sub
+			}
 
-        # formats response object
-		added_boat = {"id": new_boats.key.id, "name": content["name"], "type": content["type"],
-			"length": content["length"], "public": content["public"], "owner": sub}
+		new_car = datastore.Entity(key=client.key("cars"))
+		new_car.update({'make': content['make'], 'plate': content['plate'], 'owner': sub})
+		client.put(new_car)
 
-		return jsonify(added_boat), 201
+        # formats/sends response object
+		new_car['id'] = new_car.key.id
+		new_car['self'] = f'{request.url}/{new_car.key.id}'
+		return jsonify(new_car), 201
 
-    # get list of boats
+    # get list of all cars
 	elif request.method == 'GET':
 		display_public = False
 		jwt = request.headers.get('Authorization')

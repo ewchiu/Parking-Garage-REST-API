@@ -6,7 +6,7 @@ from json import load
 file = open('client_secret.json')
 client_secret = load(file)
 
-def JWT_verify():
+def verify():
 	req = requests.Request()
 	jwt = request.headers.get('Authorization')
 

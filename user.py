@@ -1,8 +1,6 @@
-from flask import Blueprint, request, jsonify, Response, session
+from flask import Blueprint, request, jsonify
 from google.cloud import datastore
-from google.auth.transport import requests
-from google.oauth2 import id_token
-from jwt_ops import JWT_verify
+from jwt_ops import verify
 
 client = datastore.Client()
 bp = Blueprint('user', __name__, url_prefix='/users')
@@ -28,7 +26,7 @@ def get_users():
 def get_user_by_id(user_id):
 
 	if request.method == 'GET':
-		sub = JWT_verify()
+		sub = verify()
 		user_key = client.key('users', int(user_id))
 		user = client.get(key=user_key)
 
