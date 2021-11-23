@@ -9,6 +9,11 @@ bp = Blueprint('user', __name__, url_prefix='/users')
 @bp.route('', methods=['GET'])
 def get_users():
 	if request.method == 'GET':
+
+		if request.content_type != 'application/json':
+			error = {"Error": "This MIME type is not supported by the endpoint"}
+			return jsonify(error), 406
+			
 		query = client.query(kind='users')
 		results = list(query.fetch())
 
@@ -30,7 +35,10 @@ def get_user_by_id(user_id):
 		user_key = client.key('users', int(user_id))
 		user = client.get(key=user_key)
 
-		if sub is False:
+		if request.content_type != 'application/json':
+			error = {"Error": "This MIME type is not supported by the endpoint"}
+			return jsonify(error), 406
+		elif sub is False:
 			return jsonify({'Error': 'JWT could not be verified'}), 401
 		elif sub is None:
 			return jsonify({'Error': 'No JWT was provided'}), 401

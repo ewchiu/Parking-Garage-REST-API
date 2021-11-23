@@ -1,7 +1,5 @@
 from flask import Blueprint, request, jsonify, Response, session
 from google.cloud import datastore
-from google.auth.transport import requests
-from google.oauth2 import id_token
 from jwt_ops import verify
 
 client = datastore.Client()
@@ -10,7 +8,7 @@ bp = Blueprint('car', __name__, url_prefix='/cars')
 @bp.route('', methods=['POST','GET'])
 def cars_get_post():
 
-    # create new car
+	# create new car
 	if request.method == "POST":
 		content = request.get_json()
 		sub = verify()
@@ -34,15 +32,19 @@ def cars_get_post():
 		new_car.update({'make': content['make'], 'plate': content['plate'], 'owner': sub})
 		client.put(new_car)
 
-        # formats/sends response object
+		# formats/sends response object
 		new_car['id'] = new_car.key.id
 		new_car['self'] = f'{request.url}/{new_car.key.id}'
 		return jsonify(new_car), 201
 
-    # get list of all cars
+	# get list of all cars
 	elif request.method == 'GET':
 		query = client.query(kind="cars")
 		results = list(query.fetch())
+
+		if request.content_type != 'application/json':
+			error = {"Error": "This MIME type is not supported by the endpoint"}
+			return jsonify(error), 406
 
 		for car in results:
 			car['id'] = car.key.id
@@ -55,22 +57,68 @@ def cars_get_post():
 
 @bp.route('/<car_id>', methods=['GET'])
 def cars_read_update_delete(car_id):
+	content = request.get_json()
+	car_attributes = ['make', 'plate']
+
+	sub = verify()
+	car_key = client.key('cars', int(car_id))
+	car = client.get(key=car_key)
+
+	if request.content_type != 'application/json':
+		error = {"Error": "This MIME type is not supported by the endpoint"}
+		return jsonify(error), 406
+	elif not car:
+		error = {"Error": "No car with this car_id exists"}
+		return jsonify(error), 404
+	elif sub is False:
+		return jsonify({'Error': 'JWT could not be verified'}), 401
+	elif sub is None:
+		return jsonify({'Error': 'No JWT was provided'}), 401
+	elif sub != car['owner']:
+		return jsonify({'Error': 'You do not have access to this car.'}), 403
 
 	if request.method == 'GET':
-		sub = verify()
-		car_key = client.key('cars', int(car_id))
-		car = client.get(key=car_key)
-
-		if not car:
-			error = {"Error": "No car with this car_id exists"}
-			return jsonify(error), 404
-		elif sub is False:
-			return jsonify({'Error': 'JWT could not be verified'}), 401
-		elif sub is None:
-			return jsonify({'Error': 'No JWT was provided'}), 401
-		elif sub != car['owner']:
-			return jsonify({'Error': 'You do not have access to this car.'}), 403
-
 		car['id'] = car.key.id
 		car['self'] = f'{request.url}/{car.key.id}'
 		return jsonify(car), 200
+
+	# edit one or more attributes of a car
+	elif request.method == 'PATCH':
+
+		for key in content:
+			if key not in car_attributes:
+				error = {"Error": "You can only edit attributes make and plate"}
+				return jsonify(error), 400
+
+		car.update({'make': content['make'], 'plate': content['plate']})
+		client.put(car)
+
+		car['id'] = car.key.id
+		car['self'] = f'{request.url}/{car.key.id}'
+		return jsonify(car), 201
+
+	# edit all attributes of a car
+	elif request.method == 'PUT':
+		
+		if len(content) != 2 or not content['make'] or not content['plate']:  
+			error = {"Error": "The request object is missing at least one of the required attributes"}
+			return jsonify(error), 400
+
+		for key in content:
+			if key not in car_attributes:
+				error = {"Error": "You can only edit attributes make and plate"}
+				return jsonify(error), 400
+
+		car.update({'make': content['make'], 'plate': content['plate']})
+		client.put(car)
+
+		car['id'] = car.key.id
+		car['self'] = f'{request.url}/{car.key.id}'
+		return jsonify(car), 201
+
+	elif request.method == 'DELETE':
+		client.delete(car_key)
+		return Response(status=204)
+
+	else:
+		return 'Method not recognized'
