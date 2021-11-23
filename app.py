@@ -55,7 +55,6 @@ def authorize():
 
 	# Store the state so the callback can verify the auth server response.
 	session['state'] = state
-
 	return redirect(authorization_url)
 
 @app.route('/oauth2callback')
