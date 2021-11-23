@@ -41,36 +41,36 @@ def cars_get_post():
 
     # get list of all cars
 	elif request.method == 'GET':
-		display_public = False
-		jwt = request.headers.get('Authorization')
-
-		if jwt:
-			req = reqs.Request()
-			jwt = jwt.split(" ")[1]
-
-			try:
-				sub = id_token.verify_oauth2_token(jwt, req, session['credentials']['client_id'])
-				sub = sub['sub']
-			except Exception as e:
-				display_public = True
-				print(f'Error in auth {e}')
-		
-		else:
-			display_public = True
-
-		query = client.query(kind="boats")
-		
-		if display_public:
-			query.add_filter("public", "=", True)
-		else:
-			query.add_filter("owner", "=", sub)
-
+		query = client.query(kind="cars")
 		results = list(query.fetch())
 
-		for e in results:
-			e["id"] = e.key.id
+		for car in results:
+			car['id'] = car.key.id
+			car['self'] = f'{request.url}/{car.key.id}'
 
 		return jsonify(results), 200
 
 	else:
 		return 'Method not recognized'
+
+@bp.route('/<car_id>', methods=['GET'])
+def cars_read_update_delete(car_id):
+
+	if request.method == 'GET':
+		sub = verify()
+		car_key = client.key('cars', int(car_id))
+		car = client.get(key=car_key)
+
+		if not car:
+			error = {"Error": "No car with this car_id exists"}
+			return jsonify(error), 404
+		elif sub is False:
+			return jsonify({'Error': 'JWT could not be verified'}), 401
+		elif sub is None:
+			return jsonify({'Error': 'No JWT was provided'}), 401
+		elif sub != car['owner']:
+			return jsonify({'Error': 'You do not have access to this car.'}), 403
+
+		car['id'] = car.key.id
+		car['self'] = f'{request.url}/{car.key.id}'
+		return jsonify(car), 200

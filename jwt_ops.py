@@ -17,10 +17,8 @@ def verify():
 		try:
 			sub = id_token.verify_oauth2_token(jwt, req, client_secret['web']['client_id'])
 			sub = sub['sub']
-			print(sub)
 			
 		except Exception as e: 
-			print(e)
 			return False
 
 		return sub

@@ -35,7 +35,7 @@ def get_user_by_id(user_id):
 		elif sub is None:
 			return jsonify({'Error': 'No JWT was provided'}), 401
 		elif sub != user['sub']:
-			return jsonify({'Error': 'You do not have access to this user info.'}), 401
+			return jsonify({'Error': 'You do not have access to this user info.'}), 403
 
 		if not user:
 			error = {"Error": "No user with this user_id exists"}
