@@ -51,3 +51,64 @@ def cars_get_post():
 
 	else:
 		return 'Method not recognized'
+
+@bp.route('/<id>', methods=['GET'])
+def cars_read_update_delete(id):
+	content = request.get_json()
+	space_attributes = ['space_id', 'floor', 'car']
+
+	space_key = client.key('spaces', int(id))
+	space = client.get(key=space_key)
+
+	if request.content_type != 'application/json':
+		error = {"Error": "This MIME type is not supported by the endpoint"}
+		return jsonify(error), 406
+	elif not space:
+		error = {"Error": "No car with this car_id exists"}
+		return jsonify(error), 404
+
+	if request.method == 'GET':
+		space['id'] = space.key.id
+		space['self'] = f'{request.url}/{space.key.id}'
+		return jsonify(space), 200
+
+	# edit one or more attributes of a car
+	elif request.method == 'PATCH':
+
+		for key in content:
+			if key not in space_attributes:
+				error = {"Error": "You can only edit attributes make and plate"}
+				return jsonify(error), 400
+
+		space.update({'make': content['make'], 'plate': content['plate']})
+		client.put(space)
+
+		space['id'] = space.key.id
+		space['self'] = f'{request.url}/{space.key.id}'
+		return jsonify(space), 201
+
+	# edit all attributes of a car
+	elif request.method == 'PUT':
+		
+		if len(content) != 2 or not content['make'] or not content['plate']:  
+			error = {"Error": "The request object is missing at least one of the required attributes"}
+			return jsonify(error), 400
+
+		for key in content:
+			if key not in space_attributes:
+				error = {"Error": "You can only edit attributes make and plate"}
+				return jsonify(error), 400
+
+		space.update({'make': content['make'], 'plate': content['plate']})
+		client.put(space)
+
+		space['id'] = space.key.id
+		space['self'] = f'{request.url}/{space.key.id}'
+		return jsonify(space), 201
+
+	elif request.method == 'DELETE':
+		client.delete(space_key)
+		return Response(status=204)
+
+	else:
+		return 'Method not recognized'

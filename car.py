@@ -120,6 +120,20 @@ def cars_read_update_delete(car_id):
 		return jsonify(car), 201
 
 	elif request.method == 'DELETE':
+
+		# checks if the car is currently parked in a space
+		query = client.query(kind="spaces")
+		results = list(query.fetch())
+		parked_spot = None
+
+		for space in results:
+			if space['car'] == car['id']:
+				parked_spot = space
+
+		if parked_spot:
+			parked_spot['car'] = None
+			client.put(parked_spot)
+
 		client.delete(car_key)
 		return Response(status=204)
 
