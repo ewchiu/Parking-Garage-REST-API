@@ -7,6 +7,9 @@ bp = Blueprint('car', __name__, url_prefix='/cars')
 
 @bp.route('', methods=['POST','GET'])
 def cars_get_post():
+	if request.content_type != 'application/json':
+		error = {"Error": "This MIME type is not supported by the endpoint"}
+		return jsonify(error), 406
 
 	# create new car
 	if request.method == "POST":
