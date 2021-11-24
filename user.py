@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response
 from google.cloud import datastore
 from jwt_ops import verify
 
@@ -10,8 +10,8 @@ bp = Blueprint('user', __name__, url_prefix='/users')
 def get_users():
 	if request.method == 'GET':
 
-		if request.content_type != 'application/json':
-			error = {"Error": "This MIME type is not supported by the endpoint"}
+		if 'application/json' not in request.accept_mimetypes:
+			error = {"Error": "Not Acceptable"}
 			return jsonify(error), 406
 			
 		query = client.query(kind='users')
@@ -24,7 +24,10 @@ def get_users():
 		return jsonify(results), 200
 
 	else:
-		return 'Method not recognized'
+		res = make_response({"Error": "Method not recognized"})
+		res.headers.set('Allow', ['GET'])
+		res.status_code = 405
+		return res
 
 # get user by id
 @bp.route('/<user_id>', methods=['GET'])
@@ -35,8 +38,8 @@ def get_user_by_id(user_id):
 		user_key = client.key('users', int(user_id))
 		user = client.get(key=user_key)
 
-		if request.content_type != 'application/json':
-			error = {"Error": "This MIME type is not supported by the endpoint"}
+		if 'application/json' not in request.accept_mimetypes:
+			error = {"Error": "Not Acceptable"}
 			return jsonify(error), 406
 		elif sub is False:
 			return jsonify({'Error': 'JWT could not be verified'}), 401

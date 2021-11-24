@@ -7,8 +7,8 @@ bp = Blueprint('car', __name__, url_prefix='/cars')
 
 @bp.route('', methods=['POST','GET'])
 def cars_get_post():
-	if request.content_type != 'application/json':
-		error = {"Error": "This MIME type is not supported by the endpoint"}
+	if 'application/json' not in request.accept_mimetypes:
+		error = {"Error": "Not Acceptable"}
 		return jsonify(error), 406
 
 	# create new car
@@ -45,10 +45,6 @@ def cars_get_post():
 		query = client.query(kind="cars")
 		results = list(query.fetch())
 
-		if request.content_type != 'application/json':
-			error = {"Error": "This MIME type is not supported by the endpoint"}
-			return jsonify(error), 406
-
 		for car in results:
 			car['id'] = car.key.id
 			car['self'] = f'{request.url}/{car.key.id}'
@@ -58,7 +54,7 @@ def cars_get_post():
 	else:
 		return 'Method not recognized'
 
-@bp.route('/<car_id>', methods=['GET'])
+@bp.route('/<car_id>', methods=['GET', 'PATCH', 'PUT', 'DELETE'])
 def cars_read_update_delete(car_id):
 	content = request.get_json()
 	car_attributes = ['make', 'plate']
@@ -67,9 +63,10 @@ def cars_read_update_delete(car_id):
 	car_key = client.key('cars', int(car_id))
 	car = client.get(key=car_key)
 
-	if request.content_type != 'application/json':
-		error = {"Error": "This MIME type is not supported by the endpoint"}
-		return jsonify(error), 406
+	if 'application/json' not in request.accept_mimetypes:
+		if request.method != 'DELETE':
+			error = error = {"Error": "Not Acceptable"}
+			return jsonify(error), 406
 	elif not car:
 		error = {"Error": "No car with this car_id exists"}
 		return jsonify(error), 404

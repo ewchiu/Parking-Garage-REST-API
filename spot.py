@@ -7,8 +7,8 @@ bp = Blueprint('space', __name__, url_prefix='/spaces')
 
 @bp.route('', methods=['POST','GET'])
 def cars_get_post():
-	if request.content_type != 'application/json':
-		error = {"Error": "This MIME type is not supported by the endpoint"}
+	if 'application/json' not in request.accept_mimetypes:
+		error = {"Error": "Not Acceptable"}
 		return jsonify(error), 406
 
 	# create new parking spot
@@ -52,7 +52,7 @@ def cars_get_post():
 	else:
 		return 'Method not recognized'
 
-@bp.route('/<id>', methods=['GET'])
+@bp.route('/<id>', methods=['GET', 'PATCH', 'PUT', 'DELETE'])
 def cars_read_update_delete(id):
 	content = request.get_json()
 	space_attributes = ['space_id', 'floor', 'car']
@@ -60,9 +60,10 @@ def cars_read_update_delete(id):
 	space_key = client.key('spaces', int(id))
 	space = client.get(key=space_key)
 
-	if request.content_type != 'application/json':
-		error = {"Error": "This MIME type is not supported by the endpoint"}
-		return jsonify(error), 406
+	if 'application/json' not in request.accept_mimetypes:
+		if request.method != 'DELETE':
+			error = {"Error": "Not Acceptable"}
+			return jsonify(error), 406
 	elif not space:
 		error = {"Error": "No car with this car_id exists"}
 		return jsonify(error), 404
