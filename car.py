@@ -43,8 +43,18 @@ def cars_get_post():
 	# get list of all cars
 	elif request.method == 'GET':
 		query = client.query(kind="cars")
-		results = list(query.fetch())
+		sub = None
 
+		if request.headers.get('Authorization'):
+			sub = verify()
+
+			if sub is False:
+				return jsonify({'Error': 'JWT could not be verified'}), 401
+
+		if sub:
+			query.add_filter('owner', '=', sub)
+
+		results = list(query.fetch())
 		for car in results:
 			car['id'] = car.key.id
 			car['self'] = f'{request.url}/{car.key.id}'
