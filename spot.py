@@ -15,21 +15,23 @@ def cars_get_post():
 	if request.method == "POST":
 		content = request.get_json()
 
-		if 'space_id' not in content or 'floor' not in content or 'car' not in content or len(content) != 3:
+		if 'space_id' not in content or 'floor' not in content or 'handicap' not in content or len(content) != 3:
 			error = {"Error": "The request object is missing at least one of the required attributes"}
 			return jsonify(error), 400
 
-		new_space = {
-			'space_id': content['space_id'],
-			'floor': content['floor'],
-			'car': content['car']
-			}
+		# new_space = {
+		# 	'space_id': content['space_id'],
+		# 	'floor': content['floor'],
+		# 	'handicap': content['handicap'],
+		# 	'car': content['car']
+		# 	}
 
 		new_space = datastore.Entity(key=client.key("spaces"))
 		new_space.update({
 			'space_id': content['space_id'],
 			'floor': content['floor'],
-			'car': content['car']
+			'handicap': content['handicap'],
+			'car': None
 			})
 		client.put(new_space)
 
@@ -58,7 +60,7 @@ def cars_get_post():
 @bp.route('/<id>', methods=['GET', 'PATCH', 'PUT', 'DELETE'])
 def cars_read_update_delete(id):
 	content = request.get_json()
-	space_attributes = ['space_id', 'floor', 'car']
+	space_attributes = ['space_id', 'floor', 'handicap', 'car']
 
 	space_key = client.key('spaces', int(id))
 	space = client.get(key=space_key)
@@ -94,7 +96,7 @@ def cars_read_update_delete(id):
 	# edit all attributes of a car
 	elif request.method == 'PUT':
 		
-		if len(content) != 3 or not content['space_id'] or not content['car'] or not content['floor']:  
+		if 'space_id' not in content or 'floor' not in content or 'handicap' not in content or 'car' not in content or len(content) != 4:
 			error = {"Error": "The request object is missing at least one of the required attributes"}
 			return jsonify(error), 400
 

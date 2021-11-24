@@ -21,18 +21,19 @@ def cars_get_post():
 		elif sub is None:
 			return jsonify({'Error': 'No JWT was provided'}), 401
 
-		if 'make' not in content or 'plate' not in content or len(content) != 2:
+		if 'make' not in content or 'plate' not in content or 'make' not in content or len(content) != 3:
 			error = {"Error": "The request object is missing at least one of the required attributes"}
 			return jsonify(error), 400
 
-		new_car = {
-			'make': content['make'], 
-			'plate': content['plate'], 
-			'owner': sub
-			}
+		# new_car = {
+		# 	'make': content['make'], 
+		# 	'model': content['model'],
+		# 	'plate': content['plate'], 
+		# 	'owner': sub
+		# 	}
 
 		new_car = datastore.Entity(key=client.key("cars"))
-		new_car.update({'make': content['make'], 'plate': content['plate'], 'owner': sub})
+		new_car.update({'make': content['make'], 'model': content['model'],'plate': content['plate'], 'owner': sub})
 		client.put(new_car)
 
 		# formats/sends response object
@@ -70,7 +71,7 @@ def cars_get_post():
 @bp.route('/<car_id>', methods=['GET', 'PATCH', 'PUT', 'DELETE'])
 def cars_read_update_delete(car_id):
 	content = request.get_json()
-	car_attributes = ['make', 'plate']
+	car_attributes = ['make', 'model', 'plate']
 
 	sub = verify()
 	car_key = client.key('cars', int(car_id))
@@ -123,7 +124,7 @@ def cars_read_update_delete(car_id):
 				error = {"Error": "You can only edit attributes of the entity"}
 				return jsonify(error), 400
 
-		car.update({'make': content['make'], 'plate': content['plate']})
+		car.update({'make': content['make'], 'model': content['model'], 'plate': content['plate']})
 		client.put(car)
 
 		car['id'] = car.key.id
