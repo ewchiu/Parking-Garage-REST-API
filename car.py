@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, Response, session
+from flask import Blueprint, request, jsonify, Response, session, make_response
 from google.cloud import datastore
 from jwt_ops import verify
 
@@ -62,7 +62,10 @@ def cars_get_post():
 		return jsonify(results), 200
 
 	else:
-		return 'Method not recognized'
+		res = make_response({"Error": "Method not recognized"})
+		res.headers.set('Allow', ['GET', 'POST'])
+		res.status_code = 405
+		return res
 
 @bp.route('/<car_id>', methods=['GET', 'PATCH', 'PUT', 'DELETE'])
 def cars_read_update_delete(car_id):
@@ -142,4 +145,7 @@ def cars_read_update_delete(car_id):
 		return Response(status=204)
 
 	else:
-		return 'Method not recognized'
+		res = make_response({"Error": "Method not recognized"})
+		res.headers.set('Allow', ['GET', 'PATCH', 'PUT', 'DELETE'])
+		res.status_code = 405
+		return res

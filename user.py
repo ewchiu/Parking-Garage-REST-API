@@ -56,3 +56,9 @@ def get_user_by_id(user_id):
 		user['self'] = f'{request.url}/{user.key.id}'
 		return jsonify(user), 200
 
+	else:
+		res = make_response({"Error": "Method not recognized"})
+		res.headers.set('Allow', ['GET'])
+		res.status_code = 405
+		return res
+
