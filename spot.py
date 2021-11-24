@@ -78,12 +78,12 @@ def cars_read_update_delete(id):
 
 		for key in content:
 			if key not in space_attributes:
-				error = {"Error": "You can only edit attributes make and plate"}
+				error = {"Error": "You can only edit attributes of the entity"}
 				return jsonify(error), 400
 
-		space.update({'make': content['make'], 'plate': content['plate']})
-		client.put(space)
+			space[key] = content[key]
 
+		client.put(space)
 		space['id'] = space.key.id
 		space['self'] = f'{request.url}/{space.key.id}'
 		return jsonify(space), 201
@@ -91,16 +91,17 @@ def cars_read_update_delete(id):
 	# edit all attributes of a car
 	elif request.method == 'PUT':
 		
-		if len(content) != 2 or not content['make'] or not content['plate']:  
+		if len(content) != 3 or not content['space_id'] or not content['car'] or not content['floor']:  
 			error = {"Error": "The request object is missing at least one of the required attributes"}
 			return jsonify(error), 400
 
 		for key in content:
 			if key not in space_attributes:
-				error = {"Error": "You can only edit attributes make and plate"}
+				error = {"Error": "You can only edit attributes of the entity"}
 				return jsonify(error), 400
 
-		space.update({'make': content['make'], 'plate': content['plate']})
+			space[key] = content[key]
+		
 		client.put(space)
 
 		space['id'] = space.key.id

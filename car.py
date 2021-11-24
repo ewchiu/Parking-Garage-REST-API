@@ -87,10 +87,11 @@ def cars_read_update_delete(car_id):
 
 		for key in content:
 			if key not in car_attributes:
-				error = {"Error": "You can only edit attributes make and plate"}
+				error = {"Error": "You can only edit attributes of the entity"}
 				return jsonify(error), 400
 
-		car.update({'make': content['make'], 'plate': content['plate']})
+			car[key] = content[key]
+
 		client.put(car)
 
 		car['id'] = car.key.id
@@ -106,7 +107,7 @@ def cars_read_update_delete(car_id):
 
 		for key in content:
 			if key not in car_attributes:
-				error = {"Error": "You can only edit attributes make and plate"}
+				error = {"Error": "You can only edit attributes of the entity"}
 				return jsonify(error), 400
 
 		car.update({'make': content['make'], 'plate': content['plate']})
@@ -120,16 +121,12 @@ def cars_read_update_delete(car_id):
 
 		# checks if the car is currently parked in a space
 		query = client.query(kind="spaces")
-		results = list(query.fetch())
-		parked_spot = None
+		query.add_filter('car', '=', car.key.id)
+		parked_spaces = list(query.fetch())
 
-		for space in results:
-			if space['car'] == car['id']:
-				parked_spot = space
-
-		if parked_spot:
-			parked_spot['car'] = None
-			client.put(parked_spot)
+		for space in parked_spaces:
+			space['car'] = None
+			client.put(space)
 
 		client.delete(car_key)
 		return Response(status=204)

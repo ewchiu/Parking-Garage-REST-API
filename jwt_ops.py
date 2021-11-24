@@ -19,6 +19,7 @@ def verify():
 			sub = sub['sub']
 			
 		except Exception as e: 
+			print(f"Exception during verification: {e}")
 			return False
 
 		return sub

@@ -17,7 +17,7 @@ import spot
 # information for this application, including its client_id and client_secret.
 CLIENT_SECRETS_FILE = "client_secret.json"
 
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+# os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
 app.secret_key = str(uuid4)
@@ -116,4 +116,4 @@ def credentials_to_dict(credentials):
 			
 			
 if __name__ == '__main__':
-	app.run(host='127.0.0.1', port=8080, debug=True)
+	app.run(host='0.0.0.0', debug=True)
