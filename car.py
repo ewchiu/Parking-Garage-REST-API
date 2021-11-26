@@ -16,10 +16,8 @@ def cars_get_post():
 		content = request.get_json()
 		sub = verify()
 
-		if sub is False:
-			return jsonify({'Error': 'JWT could not be verified'}), 401
-		elif sub is None:
-			return jsonify({'Error': 'No JWT was provided'}), 401
+		if sub is False or sub is None:
+			return jsonify({'Error': 'Either no JWT was provided, or the JWT could not be verified'}), 401
 
 		if 'make' not in content or 'plate' not in content or 'make' not in content or len(content) != 3:
 			error = {"Error": "The request object is missing at least one of the required attributes"}
@@ -50,7 +48,7 @@ def cars_get_post():
 			sub = verify()
 
 			if sub is False:
-				return jsonify({'Error': 'JWT could not be verified'}), 401
+				return jsonify({'Error': 'Either no JWT was provided, or the JWT could not be verified'}), 401
 
 		if sub:
 			query.add_filter('owner', '=', sub)
@@ -84,10 +82,8 @@ def cars_read_update_delete(car_id):
 	elif not car:
 		error = {"Error": "No car with this car_id exists"}
 		return jsonify(error), 404
-	elif sub is False:
-		return jsonify({'Error': 'JWT could not be verified'}), 401
-	elif sub is None:
-		return jsonify({'Error': 'No JWT was provided'}), 401
+	elif sub is False or sub is None:
+		return jsonify({'Error': 'Either no JWT was provided, or the JWT could not be verified'}), 401
 	elif sub != car['owner']:
 		return jsonify({'Error': 'You do not have access to this car.'}), 403
 
@@ -101,7 +97,7 @@ def cars_read_update_delete(car_id):
 
 		for key in content:
 			if key not in car_attributes:
-				error = {"Error": "You can only edit attributes of the entity"}
+				error = {"Error": "You can only edit valid attributes of the target entity"}
 				return jsonify(error), 400
 
 			car[key] = content[key]
@@ -115,13 +111,13 @@ def cars_read_update_delete(car_id):
 	# edit all attributes of a car
 	elif request.method == 'PUT':
 		
-		if len(content) != 2 or not content['make'] or not content['plate']:  
+		if len(content) != 3 or not content['make'] or not content['model'] or not content['plate']:  
 			error = {"Error": "The request object is missing at least one of the required attributes"}
 			return jsonify(error), 400
 
 		for key in content:
 			if key not in car_attributes:
-				error = {"Error": "You can only edit attributes of the entity"}
+				error = {"Error": "You can only edit valid attributes of the target entity"}
 				return jsonify(error), 400
 
 		car.update({'make': content['make'], 'model': content['model'], 'plate': content['plate']})

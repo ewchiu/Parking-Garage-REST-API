@@ -83,7 +83,7 @@ def cars_read_update_delete(id):
 
 		for key in content:
 			if key not in space_attributes:
-				error = {"Error": "You can only edit attributes of the entity"}
+				error = {"Error": "You can only edit valid attributes of the target entity"}
 				return jsonify(error), 400
 
 			space[key] = content[key]
@@ -102,7 +102,7 @@ def cars_read_update_delete(id):
 
 		for key in content:
 			if key not in space_attributes:
-				error = {"Error": "You can only edit attributes of the entity"}
+				error = {"Error": "You can only edit valid attributes of the target entity"}
 				return jsonify(error), 400
 
 			space[key] = content[key]
