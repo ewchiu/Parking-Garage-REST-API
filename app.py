@@ -8,7 +8,7 @@ import os
 
 import user
 import car
-import spot
+import space
 
 # REST API by Eric Chiu
 # Simulates a parking garage with cars that park in spots
@@ -23,7 +23,7 @@ app = Flask(__name__)
 app.secret_key = str(uuid4)
 app.register_blueprint(user.bp)
 app.register_blueprint(car.bp)
-app.register_blueprint(spot.bp)
+app.register_blueprint(space.bp)
 
 client = datastore.Client()
 

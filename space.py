@@ -6,7 +6,7 @@ client = datastore.Client()
 bp = Blueprint('space', __name__, url_prefix='/spaces')
 
 @bp.route('', methods=['POST','GET'])
-def cars_get_post():
+def spaces_get_post():
 	if 'application/json' not in request.accept_mimetypes:
 		error = {"Error": "Not Acceptable"}
 		return jsonify(error), 406
@@ -66,7 +66,7 @@ def cars_get_post():
 		return res
 
 @bp.route('/<id>', methods=['GET', 'PATCH', 'PUT', 'DELETE'])
-def cars_read_update_delete(id):
+def spaces_read_update_delete(id):
 	content = request.get_json()
 	space_attributes = ['space_id', 'floor', 'handicap', 'car']
 
@@ -78,7 +78,7 @@ def cars_read_update_delete(id):
 			error = {"Error": "Not Acceptable"}
 			return jsonify(error), 406
 	elif not space:
-		error = {"Error": "No car with this car_id exists"}
+		error = {"Error": "No space with this space_id exists"}
 		return jsonify(error), 404
 
 	if request.method == 'GET':
@@ -130,3 +130,38 @@ def cars_read_update_delete(id):
 		res.headers.set('Allow', ['GET', 'PATCH', 'PUT', 'DELETE'])
 		res.status_code = 405
 		return res
+
+@bp.route('/<space_id>/cars/<car_id>', methods=['PUT'])
+def park_and_empty_space(space_id, car_id):
+
+	sub = verify()
+	space_key = client.key('spaces', int(space_id))
+	space = client.get(key=space_key)
+
+	car_key = client.key('cars', int(car_id))
+	car = client.get(key=car_key)
+
+	if 'application/json' not in request.accept_mimetypes:
+		if request.method != 'DELETE':
+			error = {"Error": "Not Acceptable"}
+			return jsonify(error), 406
+	elif not space:
+		error = {"Error": "No space with this space_id exists"}
+		return jsonify(error), 404
+	elif not car:
+		error = {"Error": "No car with this car_id exists"}
+		return jsonify(error), 404
+	elif sub is False or sub is None:
+		return jsonify({'Error': 'Either no JWT was provided, or the JWT could not be verified'}), 401
+	elif sub != car['owner']:
+		return jsonify({'Error': 'You do not have access to this car.'}), 403
+	
+	if request.method == 'PUT':
+		if space['car']:
+			return jsonify({'Error': 'There is already a car parked here.'}), 403
+
+		space['car'] = car
+		client.put(space)
+		space['self'] = f'{request.url}/{space.key.id}'
+		return jsonify(space), 201
+		
