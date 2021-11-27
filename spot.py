@@ -19,13 +19,6 @@ def cars_get_post():
 			error = {"Error": "The request object is missing at least one of the required attributes"}
 			return jsonify(error), 400
 
-		# new_space = {
-		# 	'space_id': content['space_id'],
-		# 	'floor': content['floor'],
-		# 	'handicap': content['handicap'],
-		# 	'car': content['car']
-		# 	}
-
 		new_space = datastore.Entity(key=client.key("spaces"))
 		new_space.update({
 			'space_id': content['space_id'],
@@ -43,13 +36,28 @@ def cars_get_post():
 	# get list of all parking spaces
 	elif request.method == 'GET':
 		query = client.query(kind="spaces")
-		results = list(query.fetch())
+		limit = int(request.args.get('limit', '5'))
+		offset = int(request.args.get('offset', '0'))
+		iterator = query.fetch(limit = limit, offset=offset)
+		pages = iterator.pages
+		results = list(next(pages))
+
+		if iterator.next_page_token:
+			next_offset = limit + offset
+			next_url = f"{request.base_url}?limit={limit}&offset={next_offset}"
+		else:
+			next_url = None
 
 		for space in results:
 			space['id'] = space.key.id
 			space['self'] = f'{request.url}/{space.key.id}'
 
-		return jsonify(results), 200
+		output = {'spaces': results}
+
+		if next_url:
+			output['next'] = next_url
+
+		return jsonify(output), 200
 
 	else:
 		res = make_response({"Error": "Method not recognized"})

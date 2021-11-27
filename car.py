@@ -23,15 +23,13 @@ def cars_get_post():
 			error = {"Error": "The request object is missing at least one of the required attributes"}
 			return jsonify(error), 400
 
-		# new_car = {
-		# 	'make': content['make'], 
-		# 	'model': content['model'],
-		# 	'plate': content['plate'], 
-		# 	'owner': sub
-		# 	}
-
 		new_car = datastore.Entity(key=client.key("cars"))
-		new_car.update({'make': content['make'], 'model': content['model'],'plate': content['plate'], 'owner': sub})
+		new_car.update({
+			'make': content['make'], 
+			'model': content['model'], 
+			'plate': content['plate'], 
+			'owner': sub
+			})
 		client.put(new_car)
 
 		# formats/sends response object
@@ -53,12 +51,28 @@ def cars_get_post():
 		if sub:
 			query.add_filter('owner', '=', sub)
 
-		results = list(query.fetch())
+		limit = int(request.args.get('limit', '5'))
+		offset = int(request.args.get('offset', '0'))
+		iterator = query.fetch(limit = limit, offset=offset)
+		pages = iterator.pages
+		results = list(next(pages))
+
+		if iterator.next_page_token:
+			next_offset = limit + offset
+			next_url = f"{request.base_url}?limit={limit}&offset={next_offset}"
+		else:
+			next_url = None
+
 		for car in results:
 			car['id'] = car.key.id
 			car['self'] = f'{request.url}/{car.key.id}'
 
-		return jsonify(results), 200
+		output = {'cars': results}
+
+		if next_url:
+			output['next'] = next_url
+
+		return jsonify(output), 200
 
 	else:
 		res = make_response({"Error": "Method not recognized"})
