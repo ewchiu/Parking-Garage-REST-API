@@ -28,7 +28,8 @@ def cars_get_post():
 			'make': content['make'], 
 			'model': content['model'], 
 			'plate': content['plate'], 
-			'owner': sub
+			'owner': sub,
+			'space': None
 			})
 		client.put(new_car)
 
@@ -83,7 +84,7 @@ def cars_get_post():
 @bp.route('/<car_id>', methods=['GET', 'PATCH', 'PUT', 'DELETE'])
 def cars_read_update_delete(car_id):
 	content = request.get_json()
-	car_attributes = ['make', 'model', 'plate']
+	car_attributes = ['make', 'model', 'plate', 'space']
 
 	sub = verify()
 	car_key = client.key('cars', int(car_id))
@@ -125,7 +126,7 @@ def cars_read_update_delete(car_id):
 	# edit all attributes of a car
 	elif request.method == 'PUT':
 		
-		if len(content) != 3 or not content['make'] or not content['model'] or not content['plate']:  
+		if len(content) != 4 or not content['make'] or not content['model'] or not content['plate'] or not content['space']:  
 			error = {"Error": "The request object is missing at least one of the required attributes"}
 			return jsonify(error), 400
 
@@ -134,7 +135,12 @@ def cars_read_update_delete(car_id):
 				error = {"Error": "You can only edit valid attributes of the target entity"}
 				return jsonify(error), 400
 
-		car.update({'make': content['make'], 'model': content['model'], 'plate': content['plate']})
+		car.update({
+			'make': content['make'], 
+			'model': content['model'], 
+			'plate': content['plate'], 
+			'space': content['space']
+			})
 		client.put(car)
 
 		car['id'] = car.key.id

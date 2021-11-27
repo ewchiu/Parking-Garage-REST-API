@@ -122,6 +122,14 @@ def spaces_read_update_delete(id):
 		return jsonify(space), 201
 
 	elif request.method == 'DELETE':
+		if space['car']:
+			car_id = space['car']
+			car_key = client.key('cars', int(car_id))
+			car = client.get(key=car_key)
+
+			car.update({'space': None})
+			client.put(car)
+
 		client.delete(space_key)
 		return Response(status=204)
 
@@ -131,7 +139,7 @@ def spaces_read_update_delete(id):
 		res.status_code = 405
 		return res
 
-@bp.route('/<space_id>/cars/<car_id>', methods=['PUT'])
+@bp.route('/<space_id>/cars/<car_id>', methods=['PUT', 'DELETE'])
 def park_and_empty_space(space_id, car_id):
 
 	sub = verify()
@@ -160,8 +168,18 @@ def park_and_empty_space(space_id, car_id):
 		if space['car']:
 			return jsonify({'Error': 'There is already a car parked here.'}), 403
 
-		space['car'] = car
+		space['car'] = car['id']
+		car['space'] = space['id']
 		client.put(space)
+		client.put(car)
+
 		space['self'] = f'{request.url}/{space.key.id}'
 		return jsonify(space), 201
+
+	elif request.method == 'DELETE':
+		space['car'] = None
+		car['space'] = None
+		client.put(space)
+		client.put(car)
+		return Response(status=204)
 		
