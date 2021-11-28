@@ -166,10 +166,10 @@ def park_and_empty_space(space_id, car_id):
 	
 	if request.method == 'PUT':
 		if space['car']:
-			return jsonify({'Error': 'There is already a car parked here.'}), 403
+			return jsonify({'Error': 'The owner needs to remove the car from the space before proceeding.'}), 400
 
-		space['car'] = car['id']
-		car['space'] = space['id']
+		space['car'] = car.key.id
+		car['space'] = space.key.id
 		client.put(space)
 		client.put(car)
 
