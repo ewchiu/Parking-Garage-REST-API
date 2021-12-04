@@ -126,7 +126,7 @@ def cars_read_update_delete(car_id):
 	# edit all attributes of a car
 	elif request.method == 'PUT':
 		
-		if len(content) != 4 or not content['make'] or not content['model'] or not content['plate'] or not content['space']:  
+		if len(content) != 4:  
 			error = {"Error": "The request object is missing at least one of the required attributes"}
 			return jsonify(error), 400
 
